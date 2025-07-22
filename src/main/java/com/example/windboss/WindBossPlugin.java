@@ -1,96 +1,84 @@
 package com.example.windboss;
 
-import org.bukkit.*;
-import org.bukkit.attribute.Attribute;
-import org.bukkit.boss.BarColor;
-import org.bukkit.boss.BarStyle;
-import org.bukkit.boss.BossBar;
-import org.bukkit.entity.*;
-import org.bukkit.event.EventHandler;
-import org.bukkit.event.Listener;
-import org.bukkit.event.entity.EntityDamageByEntityEvent;
-import org.bukkit.event.entity.EntityDeathEvent;
-import org.bukkit.inventory.ItemStack;
-import org.bukkit.potion.PotionEffect;
-import org.bukkit.potion.PotionEffectType;
-import org.bukkit.scheduler.BukkitRunnable;
-import org.bukkit.util.Vector;
+import org.bukkit.Bukkit;
+import org.bukkit.ChatColor;
+import org.bukkit.Location;
+import org.bukkit.command.Command;
+import org.bukkit.command.CommandExecutor;
+import org.bukkit.command.CommandSender;
+import org.bukkit.entity.Player;
+import org.bukkit.NamespacedKey;
+import org.bukkit.plugin.java.JavaPlugin;
 
-import java.util.HashMap;
-import java.util.UUID;
-
-public class WindBossEntity implements Listener {
-    private final LivingEntity entity;
-    private final BossBar bossBar;
-    private double maxHealth = 500.0;
-    private HashMap<UUID, Integer> hitCount = new HashMap<>();
-    private int phase = 0;
-    private boolean canFly = false;
-
-    public WindBossEntity(Location location) {
-        // Spawn custom zombie as the boss
-        Zombie boss = location.getWorld().spawn(location, Zombie.class);
-        boss.setCustomName(ChatColor.GRAY + "Wind Boss");
-        boss.setCustomNameVisible(true);
-        boss.getAttribute(Attribute.GENERIC_MAX_HEALTH).setBaseValue(maxHealth);
-        boss.setHealth(maxHealth);
-        boss.getAttribute(Attribute.GENERIC_ATTACK_DAMAGE).setBaseValue(10.0);
+public class WindBossPlugin extends JavaPlugin {
+    @Override
+    public void onEnable() {
+        // Save default config
+        saveDefaultConfig();
         
-        this.entity = boss;
+        // Register commands
+        getCommand("windboss").setExecutor(new WindBossCommand());
         
-        // Create boss bar
-        bossBar = Bukkit.createBossBar(ChatColor.GRAY + "Wind Boss", BarColor.WHITE, BarStyle.SOLID);
-        bossBar.setVisible(true);
+        // Disable Mace crafting
+        Bukkit.removeRecipe(new NamespacedKey("minecraft", "mace"));
         
-        // Register events
-        Bukkit.getPluginManager().registerEvents(this, Bukkit.getPluginManager().getPlugin("WindBoss"));
-        
-        // Start ability timers
-        startSonicBoom();
-        startPhaseChecker();
+        getLogger().info("WindBoss Plugin Enabled!");
     }
 
-    private void startSonicBoom() {
-        new BukkitRunnable() {
-            @Override
-            public void run() {
-                if (!entity.isValid()) {
-                    cancel();
-                    bossBar.removeAll();
-                    return;
-                }
-                
-                for (Player p : entity.getWorld().getPlayers()) {
-                    if (p.getLocation().distance(entity.getLocation()) <= 250) {
-                        bossBar.addPlayer(p);
-                        if (p.getLocation().distance(entity.getLocation()) <= 15) {
-                            p.damage(5.0, entity);
-                            p.sendMessage(ChatColor.GRAY + "Wind Boss hits you with Sonic Boom!");
-                        }
-                    }
-                }
-            }
-        }.runTaskTimer(Bukkit.getPluginManager().getPlugin("WindBoss"), 0, 100); // Every 5 seconds
+    @Override
+    public void onDisable() {
+        getLogger().info("WindBoss Plugin Disabled!");
     }
+}
 
-    private void startPhaseChecker() {
-        new BukkitRunnable() {
-            @Override
-            public void run() {
-                if (!entity.isValid()) {
-                    cancel();
-                    bossBar.removeAll();
-                    return;
-                }
+class WindBossCommand implements CommandExecutor {
+    @Override
+    public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
+        if (!(sender instanceof Player)) {
+            sender.sendMessage(ChatColor.RED + "This command can only be used by players!");
+            return true;
+        }
 
-                double healthPercent = entity.getHealth() / maxHealth;
-                
-                if (healthPercent <= 0.75 && phase < 1) {
-                    phase = 1;
-                    canFly = true;
-                    entity.getWorld().createExplosion(entity.getLocation(), 4.0f, false, false);
-                    startWitherSkullAttack();
+        Player player = (Player) sender;
+        
+        if (args.length == 0) {
+            player.sendMessage(ChatColor.RED + "Usage: /windboss <codes|reload|info>");
+            return true;
+        }
+
+        switch (args[0].toLowerCase()) {
+            case "codes":
+                if (!player.hasPermission("windboss.summon")) {
+                    player.sendMessage(ChatColor.RED + "You don't have permission to summon the Wind Boss!");
+                    return true;
                 }
+                Location loc = player.getLocation();
+                new WindBossEntity(loc);
+                player.sendMessage(ChatColor.GREEN + "Wind Boss summoned!");
+                break;
                 
-                if (healthPercent <= 0.50 && phase < 2) {
-                    phase =
+            case "reload":
+                if (!player.hasPermission("windboss.admin")) {
+                    player.sendMessage(ChatColor.RED + "You don't have permission to reload the plugin!");
+                    return true;
+                }
+                player.getServer().getPluginManager().getPlugin("WindBoss").reloadConfig();
+                player.sendMessage(ChatColor.GREEN + "WindBoss configuration reloaded!");
+                break;
+                
+            case "info":
+                player.sendMessage(ChatColor.AQUA + "=== Wind Boss Info ===");
+                player.sendMessage(ChatColor.GRAY + "Health: 500 HP");
+                player.sendMessage(ChatColor.GRAY + "Phases:");
+                player.sendMessage(ChatColor.GRAY + "- 75% HP: Wither Phase (Explosions, Wither Skulls, Flight)");
+                player.sendMessage(ChatColor.GRAY + "- 50% HP: Elder Guardian Phase (Mining Fatigue)");
+                player.sendMessage(ChatColor.GRAY + "- 25% HP: Ender Dragon Phase (Regeneration IV)");
+                player.sendMessage(ChatColor.GRAY + "Drops: 5 Enchanted Golden Apples, 3 Diamond Blocks, 1 Mace");
+                break;
+                
+            default:
+                player.sendMessage(ChatColor.RED + "Usage: /windboss <codes|reload|info>");
+        }
+        return true;
+    }
+}
