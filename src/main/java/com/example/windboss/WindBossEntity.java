@@ -162,7 +162,7 @@ public class WindBossEntity implements Listener {
         hitCount.put(playerId, hitCount.getOrDefault(playerId, 0) + 1);
         
         if (hitCount.get(playerId) >= 3) {
-            player.addPotionEffect(new PotionEffect(PotionEffectType.LEVITATION, 100, 1));
+            player.addPotionEffect(new PotionEffect(PotionEffectType.LEVITATION, 100, 1)); // 5 seconds (100 ticks)
             player.setVelocity(new Vector(0, 2, 0));
             hitCount.put(playerId, 0);
             player.sendMessage(ChatColor.GRAY + "Wind Boss launches you away!");
