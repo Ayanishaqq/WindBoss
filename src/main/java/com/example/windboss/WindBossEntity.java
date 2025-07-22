@@ -11,7 +11,6 @@ import org.bukkit.event.Listener;
 import org.bukkit.event.entity.EntityDamageByEntityEvent;
 import org.bukkit.event.entity.EntityDeathEvent;
 import org.bukkit.inventory.ItemStack;
-import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.potion.PotionEffect;
 import org.bukkit.potion.PotionEffectType;
 import org.bukkit.scheduler.BukkitRunnable;
@@ -21,7 +20,7 @@ import java.util.HashMap;
 import java.util.UUID;
 
 public class WindBossEntity implements Listener {
-    private final Entity entity;
+    private final LivingEntity entity;
     private final BossBar bossBar;
     private double maxHealth = 500.0;
     private HashMap<UUID, Integer> hitCount = new HashMap<>();
@@ -40,7 +39,7 @@ public class WindBossEntity implements Listener {
         this.entity = boss;
         
         // Create boss bar
-        bossBar = Bukkit.createBossBar(ChatColor.GRAY + "Wind Boss", BarColor.GRAY, BarStyle.SOLID);
+        bossBar = Bukkit.createBossBar(ChatColor.GRAY + "Wind Boss", BarColor.WHITE, BarStyle.SOLID);
         bossBar.setVisible(true);
         
         // Register events
@@ -100,11 +99,11 @@ public class WindBossEntity implements Listener {
                 
                 if (healthPercent <= 0.25 && phase < 3) {
                     phase = 3;
-                    ((LivingEntity) entity).addPotionEffect(new PotionEffect(PotionEffectType.REGENERATION, Integer.MAX_VALUE, 3));
+                    entity.addPotionEffect(new PotionEffect(PotionEffectType.REGENERATION, Integer.MAX_VALUE, 3));
                 }
                 
                 if (healthPercent > 0.75 && phase >= 3) {
-                    ((LivingEntity) entity).removePotionEffect(PotionEffectType.REGENERATION);
+                    entity.removePotionEffect(PotionEffectType.REGENERATION);
                 }
                 
                 bossBar.setProgress(healthPercent);
@@ -143,7 +142,7 @@ public class WindBossEntity implements Listener {
                 
                 for (Player p : entity.getWorld().getPlayers()) {
                     if (p.getLocation().distance(entity.getLocation()) <= 75) {
-                        p.addPotionEffect(new PotionEffect(PotionEffectType.SLOW_DIGGING, 400, 0));
+                        p.addPotionEffect(new PotionEffect(PotionEffectType.MINING_FATIGUE, 400, 0));
                     }
                 }
             }
