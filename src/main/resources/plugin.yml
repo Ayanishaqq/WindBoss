@@ -1,0 +1,15 @@
+name: WindBoss
+version: 1.0
+main: com.example.windboss.WindBossPlugin
+api-version: 1.21
+commands:
+  windboss:
+    description: Wind Boss plugin commands
+    usage: /<command> <codes|reload|info>
+permissions:
+  windboss.summon:
+    description: Allows summoning the Wind Boss
+    default: op
+  windboss.admin:
+    description: Allows reloading the plugin
+    default: op
