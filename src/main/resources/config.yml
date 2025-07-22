@@ -1,0 +1,13 @@
+# Wind Boss Plugin Configuration
+boss:
+  max-health: 500
+  sonic-boom-damage: 5
+  melee-damage: 10
+  visibility-range: 250
+  levitation-hits: 3
+  levitation-distance: 20
+  wither-phase-hp: 0.75
+  elder-phase-hp: 0.50
+  dragon-phase-hp: 0.25
+  mining-fatigue-range: 75
+  mining-fatigue-duration: 20
